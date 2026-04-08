@@ -23,11 +23,30 @@ Some prompts to answer:
 
 - What features does each `Song` use in your system
   - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+  genre, mood, energy, tempo_bpm, valence, danceability, acousticness
 
-You can include a simple diagram or bullet list if helpful.
+- What information does your `UserProfile` store
+  name, user ID, hashed password, preference on songs by genre, list of songs history, list of favorite songs
+
+- How does your `Recommender` compute a score for each song
+  use the score of the categorical matches + the weighted numeric similarity
+  For example,
+  Genre Match: +3.0 points if the song's genre exactly matches the user's preference
+  Mood Match: +2.0 points if the song's modd exactly matches the user's preference
+
+  Weighted Numeric Similarity
+  - The system calculate the abosulte difference between the user's target value and the song's actual value:
+  1. Energy Score: +1.0 * (1 - abs(User Energy - Song Energy))
+  2. Valence Score: +0.5 * (1 - abs(User Valence - Song Valence))
+  3. Danceability Score: +0.5 * (1 - abs(User Danceability - Song Danceability))
+  
+  
+
+- How do you choose which songs to recommend
+  Songs are recommended based on how well they match the user's preferences. 
+  Each song gets points if it fits the user's favorite genre and mood. It also gets extra points if its energy level is close to what the user likes.
+  If the user prefers acoustic music, songs that sound more acoustic are ranked higher. 
+  In the end, the system recommends the top k songs with the highest scores.
 
 ---
 
