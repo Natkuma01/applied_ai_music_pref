@@ -89,7 +89,7 @@ def score_song(user_prefs, song):
 
     # 1. Genre Match (+3.0)
     if song['genre'].lower() == user_prefs['genre'].lower():
-        score += 3.0
+        score += 1.0
         reasons.append(f"Genre match: {song['genre']} (+3.0)")
 
     # 2. Mood Match (+2.0)
@@ -99,7 +99,7 @@ def score_song(user_prefs, song):
 
     # 3. Energy Similarity (up to +1.0)
     energy_diff = abs(song['energy'] - user_prefs['energy'])
-    energy_score = 1.0 * (1 - energy_diff)
+    energy_score = 4.0 * (1 - energy_diff)
     score += energy_score
     reasons.append(f"Energy fit (+{energy_score:.2f})")
 

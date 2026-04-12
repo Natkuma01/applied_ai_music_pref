@@ -62,6 +62,9 @@ Prompts:
 ## 6. Limitations and Bias 
 
 Where the system struggles or behaves unfairly. 
+- the data has biased, for instance, there maybe only one song is metal or ong song that is low energy
+- the scoring is not fair, the score is always increment, so even the song is not a good match, it still get points
+- the logic is exteme, the code see the world only two side. For instance, Rock and Metal can be similar genre. However, the code treat the two as distinct. It prevents users from discovering music that is close enough or similar to what they like
 
 Prompts:  
 
@@ -75,6 +78,10 @@ Prompts:
 ## 7. Evaluation  
 
 How you checked whether the recommender behaved as expected. 
+I was surprised at how quickly the system ran out of relevant songs. For niche genres like Blues or Metal, 
+the user got their #1 match, but picks #2 through #5 felt random. This is because once the "Genre Match" 
+points were off the table, the system just picked whatever was closest in energy, even if it was a 
+totally different vibe (like Hip-Hop for a Blues fan).
 
 Prompts:  
 
