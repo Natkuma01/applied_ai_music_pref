@@ -1,6 +1,13 @@
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
+import pandas as pd
+import numpy as np
+import logging
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import MinMaxScaler
 import csv
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 @dataclass
 class Song:
@@ -56,6 +63,8 @@ class Recommender:
         _, reasons = score_song(user_prefs, vars(song))
         return ", ".join(reasons) if reasons else "general match"
 
+
+
 def load_songs(csv_path: str) -> List[Dict]:
     """
     Loads songs from a CSV file.
@@ -81,38 +90,56 @@ def load_songs(csv_path: str) -> List[Dict]:
     print(f"Loaded songs: {len(songs)}")
     return songs
 
-def score_song(user_prefs, song):
-    """Scores a song against user preferences by awarding points for matching
-    genre, mood, energy, tempo, and other audio features."""
+
+# CHANGE: not use score/adding points system, calculate the Cosine Cimilarity btw user's Ideal Vector
+#         and the song's Feature Vector
+def score_song(user_prefs: dict, song_df: pd.DataFrame):
     score = 0.0
     reasons = []
 
-    # 1. Genre Match (+3.0)
-    if song['genre'].lower() == user_prefs['genre'].lower():
-        score += 1.0
-        reasons.append(f"Genre match: {song['genre']} (+3.0)")
+    # 1. define the features we want the AI to look at 
+    features = ['energy', 'valence', 'danceability', 'acousticness']
 
-    # 2. Mood Match (+2.0)
-    if song['mood'].lower() == user_prefs['mood'].lower():
-        score += 2.0
-        reasons.append(f"Mood match: {song['mood']} (+2.0)")
+    # 2. prepare the data - turn the user's dream features into a tiny list(vector)
+    user_vector = np.array([[user_prefs[f] for f in features]])
 
-    # 3. Energy Similarity (up to +1.0)
-    energy_diff = abs(song['energy'] - user_prefs['energy'])
-    energy_score = 4.0 * (1 - energy_diff)
-    score += energy_score
-    reasons.append(f"Energy fit (+{energy_score:.2f})")
+    # 3. take the song's features
+    song_vector = song_df[features].values.reshape(1, -1)
 
-    return score, reasons
+    # 4. Calculate Cosine Similarity
+    #    Result is btw 0(no match) and 1(perfect match)
+    similarity = cosine_similarity(user_vector, song_vector)[0][0]
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """
-    Functional implementation of the recommendation logic.
-    Required by src/main.py
-    """
-    ranked_results = []
-    for song in songs:
-        score, reasons = score_song(user_prefs, song)
-        ranked_results.append((song, score, reasons))
-    ranked_results = sorted(ranked_results, key=lambda x: x[1], reverse=True)
-    return ranked_results[:k]
+    # 5. if the genre/ modd match ==> boost
+    bonus = 0
+    if song_df['genre'].iloc[0].lower() == user_prefs['genre'].lower():
+        bonus += 0.2 # 20% boost for genre
+
+    final_score = similarity + bonus
+    return final_score
+
+# CHANGE:
+#   old way - recommend songs base on if the socre is higher, then the system recommend
+#   now - add Guardrails - for example if all 5 recommendations are the same artist or
+#                          if the Similarity Score is too low, the system will log a warning:
+#                          "Low confidence recommendation: Dataset lacks low-energy songs"
+def recommend_songs(user_prefs: Dict, songs_list: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
+    df = pd.DataFrame(songs_list)
+    results = []
+    
+    for _, row in df.iterrows():
+        # Convert row to a small dataframe for our scorer
+        song_df = pd.DataFrame([row])
+        score = score_song(user_prefs, song_df)
+        results.append((row.to_dict(), score))
+        
+    # Sort by score
+    results.sort(key=lambda x: x[1], reverse=True)
+    top_k = results[:k]
+    
+    # --- GUARDRAIL CHECK ---
+    # If the top recommendation score is very low, log a warning
+    if top_k[0][1] < 0.5:
+        logging.warning(f"Low confidence for user pref: {user_prefs['genre']}. No good matches found.")
+        
+    return top_k
