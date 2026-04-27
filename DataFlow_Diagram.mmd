@@ -1,0 +1,30 @@
+graph TD
+    A["👤 User Preferences"] --> B["Vector Conversion"]
+    C["📊 CSV Loader<br/>Load All Songs"] --> D["Song Vector Conversion"]
+    
+    B --> E["Cosine Similarity Engine"]
+    D --> E
+    
+    E --> F["Calculate Similarity Scores"]
+    F --> G{"Genre Match?"}
+    G -->|Yes| H["Apply Genre Bonus"]
+    G -->|No| I["Keep Base Score"]
+    
+    H --> J["Sort & Rank"]
+    I --> J
+    
+    J --> K["Top 5 Songs<br/>Ranked List"]
+    
+    K --> L["🛡️ Guardrail Verification"]
+    
+    L --> M{"Quality<br/>Check Pass?"}
+    M -->|Pass| N["✅ Output to User"]
+    M -->|Fail| O["⚠️ Add Warning/<br/>Suggestion"]
+    O --> N
+    
+    style A fill:#e1f5ff
+    style C fill:#f3e5f5
+    style E fill:#fff9c4
+    style L fill:#ffebee
+    style N fill:#c8e6c9
+    style H fill:#ffe0b2

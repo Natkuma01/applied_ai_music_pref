@@ -1,46 +1,33 @@
-"""
-Command line runner for the Music Recommender Simulation.
-
-This file helps you quickly run and test your recommender.
-
-You will implement the functions in recommender.py:
-- load_songs
-- score_song
-- recommend_songs
-"""
-
-from src.recommender import load_songs, recommend_songs
+from src.recommender import load_songs, recommend_songs, prepare_data
 
 
 def main() -> None:
-    songs = load_songs("data/songs.csv") 
+    raw_songs = load_songs("data/songs.csv") 
 
-    # Starter example profile
-    # user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    df_songs, music_scaler = prepare_data(raw_songs)
 
-    # uncomment below line for testing
-    # user_prefs = {"genre": "lofi", "mood": "chill", "energy": 0.35, "valence": 0.5, "danceability": 0.4}
-
-    # testing for phase 4
     test_profiles = [
-        {"genre": "pop", "mood": "happy", "energy": 0.8, "valence": 0.8, "danceability": 0.8}, # The "Optimist"
-        {"genre": "metal", "mood": "aggressive", "energy": 0.95, "valence": 0.3, "danceability": 0.5}, # The "Intense"
-        {"genre": "lofi", "mood": "chill", "energy": 0.2, "valence": 0.5, "danceability": 0.2} # The "Study Session"
+        # HIGH CONFIDENCE CASES (genre matches + good scores)
+        {"genre": "pop", "mood": "happy", "energy": 0.8, "valence": 0.8, "danceability": 0.8, "tempo_bpm": 120}, # The "Optimist" - ✅ pop exists
+        {"genre": "lofi", "mood": "chill", "energy": 0.4, "valence": 0.6, "danceability": 0.6, "acousticness": 0.8, "tempo_bpm": 75}, # The "Chill Seeker" - ✅ lofi exists
+        
+        # EDGE CASES (trigger guardrail warning - extremely niche/contradictory preferences)
+        {"genre": "punk", "mood": "rebellious", "energy": 0.02, "valence": 0.01, "danceability": 0.01, "acousticness": 0.01, "tempo_bpm": 30}, # The "Silent Punk" - extreme opposite to all songs
     ]
 
     for profile in test_profiles:
         print(f"\n ---- Testing Profile: {profile['genre']} / {profile['mood']} ---")
 
-    recommendations = recommend_songs(profile, songs, k=5)
+        recommendations = recommend_songs(profile, df_songs, music_scaler, k=5)
 
-    print("\n🎧 Top Recommendations For You 🎧\n")
-    for i, rec in enumerate(recommendations, 1):
-        # You decide the structure of each returned item.
-        # A common pattern is: (song, score, explanation)
-        song, score, explanation = rec
-        print(f"  {i}. 🎶 {song['title']} — ⭐ Score: {score:.2f}")
-        print(f"     💡 Because: {explanation}")
-        print("-" * 30)
+        print("\n🎧 Top Recommendations For You 🎧\n")
+        for i, rec in enumerate(recommendations, 1):
+            # You decide the structure of each returned item.
+            # A common pattern is: (song, score, explanation)
+            song, score, explanation = rec
+            print(f"  {i}. 🎶 {song['title']} — ⭐ Score: {score:.2f}")
+            print(f"     💡 Because: {explanation}")
+            print("-" * 30)
 
 
 
